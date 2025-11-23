@@ -103,6 +103,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     );
   }
 
+  int _quantity = 1;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -270,7 +272,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
                       _buildFeatureItem(
                         icon: Icons.verified_outlined,
                         title: 'Produto Original',
@@ -288,6 +290,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                         title: 'Compra Segura',
                         description: 'Seus dados estão protegidos',
                       ),
+                      const SizedBox(height: 32),
+                      _buildQuantitySelector(),
                       const SizedBox(height: 100),
                     ],
                   ),
@@ -322,11 +326,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             ),
             onPressed: widget.product.stock > 0
                 ? () {
-                    Provider.of<CartProvider>(context, listen: false)
-                        .addItem(widget.product);
+                    final cart = Provider.of<CartProvider>(context, listen: false);
+                    // Adiciona a quantidade selecionada
+                    for (int i = 0; i < _quantity; i++) {
+                      cart.addItem(widget.product);
+                    }
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('✓ ${widget.product.name} adicionado!'),
+                        content: Text('✓ $_quantity x ${widget.product.name} adicionado!'),
                         backgroundColor: const Color(0xFF10B981),
                         behavior: SnackBarBehavior.floating,
                       ),
@@ -348,6 +355,108 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuantitySelector() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Quantidade',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildQuantityButton(
+                icon: Icons.remove,
+                onPressed: _quantity > 1
+                    ? () {
+                        setState(() {
+                          _quantity--;
+                        });
+                      }
+                    : null,
+              ),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF6366F1), width: 2),
+                ),
+                child: Text(
+                  '$_quantity',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF6366F1),
+                  ),
+                ),
+              ),
+              _buildQuantityButton(
+                icon: Icons.add,
+                onPressed: _quantity < widget.product.stock
+                    ? () {
+                        setState(() {
+                          _quantity++;
+                        });
+                      }
+                    : null,
+              ),
+            ],
+          ),
+          if (_quantity >= widget.product.stock && widget.product.stock > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Center(
+                child: Text(
+                  'Quantidade máxima disponível',
+                  style: TextStyle(
+                    color: Colors.orange[700],
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuantityButton({
+    required IconData icon,
+    required VoidCallback? onPressed,
+  }) {
+    return Material(
+      color: onPressed != null ? const Color(0xFF6366F1) : Colors.grey[300],
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 24,
           ),
         ),
       ),

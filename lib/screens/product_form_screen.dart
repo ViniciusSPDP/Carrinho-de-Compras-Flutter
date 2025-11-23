@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:convert';
 import '../models/product.dart';
 import '../services/products_service.dart';
 
@@ -13,8 +15,13 @@ class _ProductFormScreenState extends State<ProductFormScreen>
     with SingleTickerProviderStateMixin {
   final _priceFocusNode = FocusNode();
   final _formKey = GlobalKey<FormState>();
+  final _imageUrlController = TextEditingController();
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  final ImagePicker _picker = ImagePicker();
+  
+  String? _selectedImageBase64;
+  bool _useImageFromDevice = false;
 
   var _editedProduct = Product(
     id: '',
@@ -62,6 +69,13 @@ class _ProductFormScreenState extends State<ProductFormScreen>
           'category': _editedProduct.category,
           'image': _editedProduct.image,
         };
+        _imageUrlController.text = _editedProduct.image;
+        
+        // Verifica se a imagem é base64
+        if (_editedProduct.image.startsWith('data:image')) {
+          _useImageFromDevice = true;
+          _selectedImageBase64 = _editedProduct.image;
+        }
       }
     }
     _isInit = false;
@@ -72,21 +86,174 @@ class _ProductFormScreenState extends State<ProductFormScreen>
   void dispose() {
     _animationController.dispose();
     _priceFocusNode.dispose();
+    _imageUrlController.dispose();
     super.dispose();
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        final base64Image = base64Encode(bytes);
+        final extension = image.path.split('.').last.toLowerCase();
+        
+        String mimeType = 'image/jpeg';
+        if (extension == 'png') {
+          mimeType = 'image/png';
+        } else if (extension == 'jpg' || extension == 'jpeg') {
+          mimeType = 'image/jpeg';
+        }
+
+        setState(() {
+          _selectedImageBase64 = 'data:$mimeType;base64,$base64Image';
+          _useImageFromDevice = true;
+          _imageUrlController.clear();
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✓ Imagem selecionada!'),
+            backgroundColor: Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao selecionar imagem: $e'),
+          backgroundColor: const Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _showImageSourceDialog() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Escolher Imagem',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6366F1).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.camera_alt, color: Color(0xFF6366F1)),
+              ),
+              title: const Text('Câmera'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.photo_library, color: Color(0xFF10B981)),
+              ),
+              title: const Text('Galeria'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            if (_useImageFromDevice || _imageUrlController.text.isNotEmpty)
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEF4444).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.delete_outline, color: Color(0xFFEF4444)),
+                ),
+                title: const Text('Remover Imagem'),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() {
+                    _selectedImageBase64 = null;
+                    _useImageFromDevice = false;
+                    _imageUrlController.clear();
+                  });
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   bool _isValidImageUrl(String url) {
+    if (url.startsWith('data:image')) return true; // Aceita base64
     return (url.startsWith('http') || url.startsWith('https')) &&
         (url.endsWith('.png') || url.endsWith('.jpg') || url.endsWith('.jpeg'));
   }
 
+  String _getImageForProduct() {
+    if (_useImageFromDevice && _selectedImageBase64 != null) {
+      return _selectedImageBase64!;
+    }
+    return _imageUrlController.text;
+  }
+
   Future<void> _saveForm() async {
+    // Valida se tem imagem (URL ou do dispositivo)
+    if (!_useImageFromDevice && _imageUrlController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor, adicione uma imagem do produto!'),
+          backgroundColor: Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     final isValid = _formKey.currentState?.validate();
     if (isValid == null || !isValid) {
       return;
     }
 
     _formKey.currentState?.save();
+    
+    // Define a imagem final (base64 ou URL)
+    _editedProduct = Product(
+      id: _editedProduct.id,
+      name: _editedProduct.name,
+      price: _editedProduct.price,
+      stock: _editedProduct.stock,
+      image: _getImageForProduct(),
+      category: _editedProduct.category,
+    );
 
     setState(() {
       _isLoading = true;
@@ -435,18 +602,115 @@ class _ProductFormScreenState extends State<ProductFormScreen>
                               ],
                             ),
                             const SizedBox(height: 24),
+                            
+                            // Preview da imagem
+                            if (_useImageFromDevice && _selectedImageBase64 != null)
+                              Center(
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.memory(
+                                      base64Decode(_selectedImageBase64!.split(',')[1]),
+                                      height: 200,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            else if (_imageUrlController.text.isNotEmpty && _isValidImageUrl(_imageUrlController.text))
+                              Center(
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.network(
+                                      _imageUrlController.text,
+                                      height: 200,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Container(
+                                        height: 200,
+                                        color: Colors.grey[200],
+                                        child: const Center(
+                                          child: Icon(Icons.broken_image, size: 50),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            
+                            // Botão para selecionar imagem do dispositivo
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF6366F1),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: _showImageSourceDialog,
+                              icon: const Icon(Icons.add_photo_alternate),
+                              label: Text(
+                                _useImageFromDevice || _imageUrlController.text.isNotEmpty
+                                    ? 'Alterar Imagem'
+                                    : 'Selecionar Imagem',
+                              ),
+                            ),
+                            
+                            const SizedBox(height: 16),
+                            const Row(
+                              children: [
+                                Expanded(child: Divider()),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 16),
+                                  child: Text(
+                                    'OU',
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(child: Divider()),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            
                             TextFormField(
-                              initialValue: _initValues['image'],
-                              decoration: const InputDecoration(
+                              controller: _imageUrlController,
+                              enabled: !_useImageFromDevice,
+                              decoration: InputDecoration(
                                 labelText: 'URL da Imagem',
                                 hintText: 'https://exemplo.com/imagem.jpg',
-                                prefixIcon: Icon(Icons.link),
+                                prefixIcon: const Icon(Icons.link),
+                                suffixIcon: _useImageFromDevice
+                                    ? IconButton(
+                                        icon: const Icon(Icons.edit),
+                                        onPressed: () {
+                                          setState(() {
+                                            _useImageFromDevice = false;
+                                            _selectedImageBase64 = null;
+                                          });
+                                        },
+                                        tooltip: 'Usar URL ao invés de imagem local',
+                                      )
+                                    : null,
                               ),
                               keyboardType: TextInputType.url,
                               textInputAction: TextInputAction.done,
+                              onChanged: (value) {
+                                if (value.isNotEmpty) {
+                                  setState(() {});
+                                }
+                              },
                               validator: (value) {
+                                if (_useImageFromDevice) return null;
                                 if (value == null || value.isEmpty) {
-                                  return 'Informe a URL da imagem';
+                                  return 'Informe a URL ou selecione uma imagem';
                                 }
                                 if (!_isValidImageUrl(value)) {
                                   return 'URL inválida (use .png, .jpg ou .jpeg)';
@@ -454,14 +718,16 @@ class _ProductFormScreenState extends State<ProductFormScreen>
                                 return null;
                               },
                               onSaved: (value) {
-                                _editedProduct = Product(
-                                  id: _editedProduct.id,
-                                  name: _editedProduct.name,
-                                  price: _editedProduct.price,
-                                  stock: _editedProduct.stock,
-                                  image: value!,
-                                  category: _editedProduct.category,
-                                );
+                                if (!_useImageFromDevice) {
+                                  _editedProduct = Product(
+                                    id: _editedProduct.id,
+                                    name: _editedProduct.name,
+                                    price: _editedProduct.price,
+                                    stock: _editedProduct.stock,
+                                    image: value!,
+                                    category: _editedProduct.category,
+                                  );
+                                }
                               },
                               onFieldSubmitted: (_) => _saveForm(),
                             ),
