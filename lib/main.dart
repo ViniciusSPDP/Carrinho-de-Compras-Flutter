@@ -5,28 +5,20 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'providers/cart_provider.dart';
 import 'screens/products_overview_screen.dart';
 
-// --- CONFIGURAÇÃO FIREBASE BACKGROUND ---
-// Essa função precisa ser fora de qualquer classe (Top Level)
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Se quiser fazer algo quando o app estiver fechado e chegar notificação
   await Firebase.initializeApp();
   print("Mensagem em Background: ${message.messageId}");
 }
-// ----------------------------------------
 
 void main() async {
-  // Garante que o Flutter esteja pronto antes de carregar o Firebase
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Inicializa o Firebase
   try {
     await Firebase.initializeApp();
-    
-    // Configura o handler de background
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   } catch (e) {
-    print("Erro ao inicializar Firebase (Se estiver na Web/Windows precisa de config extra): $e");
+    print("Erro ao inicializar Firebase: $e");
   }
 
   runApp(const MyApp());
@@ -50,7 +42,6 @@ class _MyAppState extends State<MyApp> {
   void _setupFirebaseNotifications() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-    // 1. Pede permissão ao usuário (importante para iOS/Android 13+)
     NotificationSettings settings = await messaging.requestPermission(
       alert: true,
       badge: true,
@@ -59,22 +50,13 @@ class _MyAppState extends State<MyApp> {
 
     print('Permissão concedida: ${settings.authorizationStatus}');
 
-    // 2. Obtém o Token do dispositivo (Identidade dele para enviar msg)
     String? token = await messaging.getToken();
     print("========================================");
     print("SEU TOKEN DO FIREBASE: $token");
     print("========================================");
 
-    // 3. Ouve mensagens quando o App está ABERTO (Foreground)
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('Mensagem recebida com app aberto: ${message.notification?.title}');
-      
-      if (message.notification != null) {
-        // Mostra um alerta simples na tela (SnackBar)
-        // Usamos um GlobalKey ou um hack simples aqui, mas o ideal é um serviço de navegação
-        // Como estamos no root, vamos apenas imprimir por enquanto ou usar um pacote de toast
-        // Mas para fins didáticos, vamos confiar que a notificação nativa aparece
-      }
     });
   }
 
@@ -88,9 +70,42 @@ class _MyAppState extends State<MyApp> {
         title: 'Fatec Shop',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          primarySwatch: Colors.blue,
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF6366F1),
+            brightness: Brightness.light,
+          ),
+          cardTheme: CardThemeData(  // ← MUDANÇA AQUI: CardTheme → CardThemeData
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          inputDecorationTheme: InputDecorationTheme(
+            filled: true,
+            fillColor: Colors.grey[50],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[200]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF6366F1), width: 2),
+            ),
+          ),
         ),
         home: const ProductsOverviewScreen(), 
       ),

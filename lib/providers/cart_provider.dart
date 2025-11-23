@@ -20,14 +20,14 @@ class CartItem {
 
 class CartProvider with ChangeNotifier {
   Map<String, CartItem> _items = {};
-
-  final Map<String, double> _coupons = {'FATEC10': 10.0};
+  Map<String, double> _coupons = {'FATEC10': 10.0};
 
   double _frete = 0.0;
   double _descontoPorcentagem = 0.0;
   String? _cupomAplicado;
 
   Map<String, CartItem> get items => {..._items};
+  Map<String, double> get coupons => {..._coupons};
   int get itemCount => _items.length;
   double get frete => _frete;
   double get descontoPorcentagem => _descontoPorcentagem;
@@ -49,6 +49,19 @@ class CartProvider with ChangeNotifier {
 
   void cadastrarCupom(String codigo, double porcentagem) {
     _coupons[codigo.toUpperCase()] = porcentagem;
+    notifyListeners();
+  }
+
+  void removerCupom(String codigo) {
+    final key = codigo.toUpperCase();
+    _coupons.remove(key);
+    
+    // Se o cupom removido era o aplicado, remove a aplicação
+    if (_cupomAplicado == key) {
+      _descontoPorcentagem = 0.0;
+      _cupomAplicado = null;
+    }
+    
     notifyListeners();
   }
 
@@ -75,7 +88,7 @@ class CartProvider with ChangeNotifier {
     int cepInt = int.parse(cleanCep);
 
     if (cepInt >= 15600000 && cepInt <= 15614999) {
-      _frete = 0.00; // Grátis
+      _frete = 0.00;
     } else if (cepInt >= 01000000 && cepInt <= 19999999) {
       _frete = 25.00;
     } else {
