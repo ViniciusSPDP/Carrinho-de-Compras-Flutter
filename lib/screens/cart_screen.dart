@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert'; // <--- IMPORTANTE: Necessário para o base64Decode
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import '../models/product.dart';
@@ -417,18 +418,32 @@ class _CartScreenState extends State<CartScreen> with SingleTickerProviderStateM
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  cartItems[i].image,
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    width: 80,
-                    height: 80,
-                    color: Colors.grey[200],
-                    child: const Icon(Icons.image_not_supported),
-                  ),
-                ),
+                // LÓGICA CORRIGIDA PARA IMAGENS AQUI:
+                child: cartItems[i].image.startsWith('data:image')
+                    ? Image.memory(
+                        base64Decode(cartItems[i].image.split(',').last),
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 80,
+                          height: 80,
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.broken_image),
+                        ),
+                      )
+                    : Image.network(
+                        cartItems[i].image,
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 80,
+                          height: 80,
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.image_not_supported),
+                        ),
+                      ),
               ),
               const SizedBox(width: 12),
               Expanded(

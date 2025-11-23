@@ -7,6 +7,7 @@ import 'cart_screen.dart';
 import 'product_form_screen.dart';
 import 'product_detail_screen.dart';
 import 'admin_screen.dart';
+import 'dart:convert';
 
 class ProductsOverviewScreen extends StatefulWidget {
   const ProductsOverviewScreen({super.key});
@@ -15,12 +16,12 @@ class ProductsOverviewScreen extends StatefulWidget {
   State<ProductsOverviewScreen> createState() => _ProductsOverviewScreenState();
 }
 
-class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> 
+class _ProductsOverviewScreenState extends State<ProductsOverviewScreen>
     with SingleTickerProviderStateMixin {
   final ProductsService _productsService = ProductsService();
   late Future<List<Product>> _productsFuture;
   late AnimationController _animationController;
-  
+
   String _searchQuery = "";
   String _selectedCategory = 'Todas';
   double _maxPriceFilter = 10000.0;
@@ -45,11 +46,46 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen>
 
   Future<void> _seedDatabase(BuildContext context) async {
     final List<Product> dummyProducts = [
-      Product(id: '', name: 'Notebook Gamer', price: 4500.00, stock: 5, category: 'Eletrônicos', image: 'https://placehold.co/400/6366F1/FFFFFF/png?text=Notebook'),
-      Product(id: '', name: 'Smartphone Pro', price: 2800.00, stock: 8, category: 'Eletrônicos', image: 'https://placehold.co/400/10B981/FFFFFF/png?text=Smartphone'),
-      Product(id: '', name: 'Tênis de Corrida', price: 299.90, stock: 12, category: 'Calçados', image: 'https://placehold.co/400/F59E0B/FFFFFF/png?text=Tenis'),
-      Product(id: '', name: 'Cafeteira Express', price: 450.00, stock: 3, category: 'Eletro', image: 'https://placehold.co/400/EF4444/FFFFFF/png?text=Cafeteira'),
-      Product(id: '', name: 'Kit Ferramentas', price: 120.00, stock: 20, category: 'Utilidades', image: 'https://placehold.co/400/8B5CF6/FFFFFF/png?text=Ferramentas'),
+      Product(
+        id: '',
+        name: 'Notebook Gamer',
+        price: 4500.00,
+        stock: 5,
+        category: 'Eletrônicos',
+        image: 'https://placehold.co/400/6366F1/FFFFFF/png?text=Notebook',
+      ),
+      Product(
+        id: '',
+        name: 'Smartphone Pro',
+        price: 2800.00,
+        stock: 8,
+        category: 'Eletrônicos',
+        image: 'https://placehold.co/400/10B981/FFFFFF/png?text=Smartphone',
+      ),
+      Product(
+        id: '',
+        name: 'Tênis de Corrida',
+        price: 299.90,
+        stock: 12,
+        category: 'Calçados',
+        image: 'https://placehold.co/400/F59E0B/FFFFFF/png?text=Tenis',
+      ),
+      Product(
+        id: '',
+        name: 'Cafeteira Express',
+        price: 450.00,
+        stock: 3,
+        category: 'Eletro',
+        image: 'https://placehold.co/400/EF4444/FFFFFF/png?text=Cafeteira',
+      ),
+      Product(
+        id: '',
+        name: 'Kit Ferramentas',
+        price: 120.00,
+        stock: 20,
+        category: 'Utilidades',
+        image: 'https://placehold.co/400/8B5CF6/FFFFFF/png?text=Ferramentas',
+      ),
     ];
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -162,11 +198,16 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen>
             );
           } else {
             final allProducts = snapshot.data!;
-            final categories = ['Todas', ...allProducts.map((e) => e.category).toSet().toList()];
-            
+            final categories = [
+              'Todas',
+              ...allProducts.map((e) => e.category).toSet().toList(),
+            ];
+
             double maxProductPrice = 0.0;
             if (allProducts.isNotEmpty) {
-              maxProductPrice = allProducts.map((e) => e.price).reduce((a, b) => a > b ? a : b);
+              maxProductPrice = allProducts
+                  .map((e) => e.price)
+                  .reduce((a, b) => a > b ? a : b);
             }
 
             if (!_filtersInitialized && maxProductPrice > 0) {
@@ -175,8 +216,12 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen>
             }
 
             final filteredProducts = allProducts.where((prod) {
-              final matchesSearch = prod.name.toLowerCase().contains(_searchQuery);
-              final matchesCategory = _selectedCategory == 'Todas' || prod.category == _selectedCategory;
+              final matchesSearch = prod.name.toLowerCase().contains(
+                _searchQuery,
+              );
+              final matchesCategory =
+                  _selectedCategory == 'Todas' ||
+                  prod.category == _selectedCategory;
               final matchesPrice = prod.price <= _maxPriceFilter;
               return matchesSearch && matchesCategory && matchesPrice;
             }).toList();
@@ -185,9 +230,9 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen>
               children: [
                 _buildFiltersCard(categories, maxProductPrice),
                 Expanded(
-                  child: filteredProducts.isEmpty 
-                    ? _buildEmptyState()
-                    : _buildProductGrid(filteredProducts, cart),
+                  child: filteredProducts.isEmpty
+                      ? _buildEmptyState()
+                      : _buildProductGrid(filteredProducts, cart),
                 ),
               ],
             );
@@ -293,12 +338,11 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen>
       leading: Icon(icon, color: color),
       title: Text(
         title,
-        style: TextStyle(
-          fontWeight: FontWeight.w500,
-          color: color,
-        ),
+        style: TextStyle(fontWeight: FontWeight.w500, color: color),
       ),
-      subtitle: subtitle != null ? Text(subtitle, style: const TextStyle(fontSize: 12)) : null,
+      subtitle: subtitle != null
+          ? Text(subtitle, style: const TextStyle(fontSize: 12))
+          : null,
       onTap: onTap,
     );
   }
@@ -350,14 +394,14 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen>
                   const SizedBox(width: 12),
                   const Text(
                     'Filtros',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   const Spacer(),
                   RotationTransition(
-                    turns: Tween(begin: 0.0, end: 0.5).animate(_animationController),
+                    turns: Tween(
+                      begin: 0.0,
+                      end: 0.5,
+                    ).animate(_animationController),
                     child: const Icon(Icons.expand_more),
                   ),
                 ],
@@ -387,7 +431,9 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen>
                         ),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<String>(
-                          value: categories.contains(_selectedCategory) ? _selectedCategory : 'Todas',
+                          value: categories.contains(_selectedCategory)
+                              ? _selectedCategory
+                              : 'Todas',
                           decoration: InputDecoration(
                             labelText: 'Categoria',
                             prefixIcon: const Icon(Icons.category_outlined),
@@ -418,9 +464,14 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen>
                                   style: TextStyle(fontWeight: FontWeight.w500),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF6366F1).withOpacity(0.1),
+                                    color: const Color(
+                                      0xFF6366F1,
+                                    ).withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -436,7 +487,9 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen>
                             Slider(
                               value: _maxPriceFilter,
                               min: 0,
-                              max: maxProductPrice > 0 ? maxProductPrice : 10000,
+                              max: maxProductPrice > 0
+                                  ? maxProductPrice
+                                  : 10000,
                               activeColor: const Color(0xFF6366F1),
                               onChanged: (double value) {
                                 setState(() {
@@ -534,26 +587,56 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen>
                   child: Stack(
                     children: [
                       ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                        child: Image.network(
-                          product.image,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          errorBuilder: (ctx, error, stackTrace) => Container(
-                            color: Colors.grey[100],
-                            child: const Center(
-                              child: Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
-                            ),
-                          ),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(16),
                         ),
+                        child: product.image.startsWith('data:image')
+                            ? Image.memory(
+                                base64Decode(
+                                  product.image.split(',').last,
+                                ), // Decodifica se for Base64
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                errorBuilder: (ctx, error, stackTrace) =>
+                                    Container(
+                                      color: Colors.grey[100],
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.broken_image,
+                                          size: 50,
+                                        ),
+                                      ),
+                                    ),
+                              )
+                            : Image.network(
+                                product.image, // Usa Network se for URL normal
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                errorBuilder: (ctx, error, stackTrace) =>
+                                    Container(
+                                      color: Colors.grey[100],
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.image_not_supported,
+                                          size: 50,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ),
+                              ),
                       ),
                       Positioned(
                         top: 8,
                         right: 8,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: product.stock > 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                            color: product.stock > 0
+                                ? const Color(0xFF10B981)
+                                : const Color(0xFFEF4444),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -586,10 +669,7 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen>
                       const SizedBox(height: 4),
                       Text(
                         product.category,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 8),
                       Row(
@@ -606,10 +686,14 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen>
                           InkWell(
                             onTap: () {
                               cart.addItem(product);
-                              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                              ScaffoldMessenger.of(
+                                context,
+                              ).hideCurrentSnackBar();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('✓ ${product.name} adicionado!'),
+                                  content: Text(
+                                    '✓ ${product.name} adicionado!',
+                                  ),
                                   duration: const Duration(seconds: 2),
                                   backgroundColor: const Color(0xFF10B981),
                                   behavior: SnackBarBehavior.floating,

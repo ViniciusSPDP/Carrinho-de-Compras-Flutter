@@ -4,6 +4,7 @@ import '../models/product.dart';
 import '../providers/cart_provider.dart';
 import '../services/products_service.dart';
 import 'product_form_screen.dart';
+import 'dart:convert';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -14,7 +15,7 @@ class ProductDetailScreen extends StatefulWidget {
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
 }
 
-class _ProductDetailScreenState extends State<ProductDetailScreen> 
+class _ProductDetailScreenState extends State<ProductDetailScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -31,13 +32,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       parent: _animationController,
       curve: Curves.easeInOut,
     );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
     _animationController.forward();
   }
 
@@ -59,7 +60,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             Text('Excluir Produto?'),
           ],
         ),
-        content: Text('Deseja realmente remover "${widget.product.name}" da loja?'),
+        content: Text(
+          'Deseja realmente remover "${widget.product.name}" da loja?',
+        ),
         actions: [
           TextButton(
             child: const Text('Cancelar'),
@@ -120,16 +123,25 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             flexibleSpace: FlexibleSpaceBar(
               background: Hero(
                 tag: 'product-${widget.product.id}',
-                child: Image.network(
-                  widget.product.image,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: Colors.grey[200],
-                    child: const Center(
-                      child: Icon(Icons.broken_image, size: 100, color: Colors.grey),
-                    ),
-                  ),
-                ),
+                child: widget.product.image.startsWith('data:image')
+                    ? Image.memory(
+                        base64Decode(widget.product.image.split(',').last),
+                        fit: BoxFit.cover,
+                      )
+                    : Image.network(
+                        widget.product.image,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: Icon(
+                              Icons.broken_image,
+                              size: 100,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                      ),
               ),
             ),
             actions: [
@@ -161,7 +173,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Color(0xFFEF4444)),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: Color(0xFFEF4444),
+                  ),
                   onPressed: () => _deleteProduct(context),
                 ),
               ),
@@ -178,7 +193,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF6366F1).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
@@ -214,9 +232,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                           ),
                           const Spacer(),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
-                              color: widget.product.stock > 0 
+                              color: widget.product.stock > 0
                                   ? const Color(0xFF10B981).withOpacity(0.1)
                                   : const Color(0xFFEF4444).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
@@ -224,10 +245,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                             child: Row(
                               children: [
                                 Icon(
-                                  widget.product.stock > 0 
+                                  widget.product.stock > 0
                                       ? Icons.check_circle_outline
                                       : Icons.error_outline,
-                                  color: widget.product.stock > 0 
+                                  color: widget.product.stock > 0
                                       ? const Color(0xFF10B981)
                                       : const Color(0xFFEF4444),
                                   size: 20,
@@ -236,7 +257,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                 Text(
                                   'Estoque: ${widget.product.stock}',
                                   style: TextStyle(
-                                    color: widget.product.stock > 0 
+                                    color: widget.product.stock > 0
                                         ? const Color(0xFF10B981)
                                         : const Color(0xFFEF4444),
                                     fontWeight: FontWeight.w600,
@@ -326,14 +347,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             ),
             onPressed: widget.product.stock > 0
                 ? () {
-                    final cart = Provider.of<CartProvider>(context, listen: false);
+                    final cart = Provider.of<CartProvider>(
+                      context,
+                      listen: false,
+                    );
                     // Adiciona a quantidade selecionada
                     for (int i = 0; i < _quantity; i++) {
                       cart.addItem(widget.product);
                     }
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('✓ $_quantity x ${widget.product.name} adicionado!'),
+                        content: Text(
+                          '✓ $_quantity x ${widget.product.name} adicionado!',
+                        ),
                         backgroundColor: const Color(0xFF10B981),
                         behavior: SnackBarBehavior.floating,
                       ),
@@ -346,7 +372,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 const Icon(Icons.add_shopping_cart, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  widget.product.stock > 0 ? 'ADICIONAR AO CARRINHO' : 'SEM ESTOQUE',
+                  widget.product.stock > 0
+                      ? 'ADICIONAR AO CARRINHO'
+                      : 'SEM ESTOQUE',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -374,10 +402,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         children: [
           const Text(
             'Quantidade',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 16),
           Row(
@@ -395,7 +420,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               ),
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 24),
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -453,11 +481,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.all(16),
-          child: Icon(
-            icon,
-            color: Colors.white,
-            size: 24,
-          ),
+          child: Icon(icon, color: Colors.white, size: 24),
         ),
       ),
     );
@@ -492,10 +516,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               ),
               Text(
                 description,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: Colors.grey[600], fontSize: 13),
               ),
             ],
           ),
