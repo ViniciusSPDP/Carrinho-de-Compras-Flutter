@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:convert'; // <--- IMPORTANTE: Necessário para o base64Decode
+import 'dart:convert'; // Necessário para base64Decode
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import '../models/product.dart';
@@ -107,6 +107,7 @@ class _CartScreenState extends State<CartScreen> with SingleTickerProviderStateM
     final cartItems = cart.items.values.toList();
     
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
@@ -157,15 +158,17 @@ class _CartScreenState extends State<CartScreen> with SingleTickerProviderStateM
         opacity: _fadeAnimation,
         child: cart.itemCount == 0
             ? _buildEmptyCart()
-            : Column(
-                children: [
-                  _buildSummaryCard(cart),
-                  _buildShippingAndCoupon(cart),
-                  Expanded(child: _buildCartItems(cartItems, cart)),
-                  _buildCheckoutButton(cart),
-                ],
+            : SingleChildScrollView(
+                child: Column(
+                  children: [
+                    _buildSummaryCard(cart),
+                    _buildShippingAndCoupon(cart),
+                    _buildCartItems(cartItems, cart),
+                  ],
+                ),
               ),
       ),
+      bottomNavigationBar: cart.itemCount == 0 ? null : _buildCheckoutButton(cart),
     );
   }
 
@@ -398,6 +401,8 @@ class _CartScreenState extends State<CartScreen> with SingleTickerProviderStateM
   Widget _buildCartItems(List<CartItem> cartItems, CartProvider cart) {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
+      shrinkWrap: true, 
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: cartItems.length,
       itemBuilder: (ctx, i) => Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -418,7 +423,6 @@ class _CartScreenState extends State<CartScreen> with SingleTickerProviderStateM
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                // LÓGICA CORRIGIDA PARA IMAGENS AQUI:
                 child: cartItems[i].image.startsWith('data:image')
                     ? Image.memory(
                         base64Decode(cartItems[i].image.split(',').last),

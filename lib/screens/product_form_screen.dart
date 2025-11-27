@@ -11,7 +11,7 @@ class ProductFormScreen extends StatefulWidget {
   State<ProductFormScreen> createState() => _ProductFormScreenState();
 }
 
-class _ProductFormScreenState extends State<ProductFormScreen> 
+class _ProductFormScreenState extends State<ProductFormScreen>
     with SingleTickerProviderStateMixin {
   final _priceFocusNode = FocusNode();
   final _formKey = GlobalKey<FormState>();
@@ -19,7 +19,7 @@ class _ProductFormScreenState extends State<ProductFormScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   final ImagePicker _picker = ImagePicker();
-  
+
   String? _selectedImageBase64;
   bool _useImageFromDevice = false;
 
@@ -70,7 +70,7 @@ class _ProductFormScreenState extends State<ProductFormScreen>
           'image': _editedProduct.image,
         };
         _imageUrlController.text = _editedProduct.image;
-        
+
         // Verifica se a imagem é base64
         if (_editedProduct.image.startsWith('data:image')) {
           _useImageFromDevice = true;
@@ -94,16 +94,16 @@ class _ProductFormScreenState extends State<ProductFormScreen>
     try {
       final XFile? image = await _picker.pickImage(
         source: source,
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 85,
+        maxWidth: 400, // Reduzi de 800 para 400
+        maxHeight: 400, // Reduzi de 800 para 400
+        imageQuality: 50, // Reduzi a qualidade para 50%
       );
 
       if (image != null) {
         final bytes = await image.readAsBytes();
         final base64Image = base64Encode(bytes);
         final extension = image.path.split('.').last.toLowerCase();
-        
+
         String mimeType = 'image/jpeg';
         if (extension == 'png') {
           mimeType = 'image/png';
@@ -150,10 +150,7 @@ class _ProductFormScreenState extends State<ProductFormScreen>
           children: [
             const Text(
               'Escolher Imagem',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 20),
             ListTile(
@@ -178,7 +175,10 @@ class _ProductFormScreenState extends State<ProductFormScreen>
                   color: const Color(0xFF10B981).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.photo_library, color: Color(0xFF10B981)),
+                child: const Icon(
+                  Icons.photo_library,
+                  color: Color(0xFF10B981),
+                ),
               ),
               title: const Text('Galeria'),
               onTap: () {
@@ -194,7 +194,10 @@ class _ProductFormScreenState extends State<ProductFormScreen>
                     color: const Color(0xFFEF4444).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.delete_outline, color: Color(0xFFEF4444)),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    color: Color(0xFFEF4444),
+                  ),
                 ),
                 title: const Text('Remover Imagem'),
                 onTap: () {
@@ -244,7 +247,7 @@ class _ProductFormScreenState extends State<ProductFormScreen>
     }
 
     _formKey.currentState?.save();
-    
+
     // Define a imagem final (base64 ou URL)
     _editedProduct = Product(
       id: _editedProduct.id,
@@ -285,7 +288,9 @@ class _ProductFormScreenState extends State<ProductFormScreen>
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             title: const Row(
               children: [
                 Icon(Icons.error_outline, color: Color(0xFFEF4444)),
@@ -372,7 +377,9 @@ class _ProductFormScreenState extends State<ProductFormScreen>
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF6366F1).withOpacity(0.1),
+                                    color: const Color(
+                                      0xFF6366F1,
+                                    ).withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(
@@ -401,7 +408,9 @@ class _ProductFormScreenState extends State<ProductFormScreen>
                               ),
                               textInputAction: TextInputAction.next,
                               onFieldSubmitted: (_) {
-                                FocusScope.of(context).requestFocus(_priceFocusNode);
+                                FocusScope.of(
+                                  context,
+                                ).requestFocus(_priceFocusNode);
                               },
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
@@ -471,7 +480,9 @@ class _ProductFormScreenState extends State<ProductFormScreen>
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF10B981).withOpacity(0.1),
+                                    color: const Color(
+                                      0xFF10B981,
+                                    ).withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(
@@ -500,9 +511,10 @@ class _ProductFormScreenState extends State<ProductFormScreen>
                                 prefixText: 'R\$ ',
                               ),
                               textInputAction: TextInputAction.next,
-                              keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
                               focusNode: _priceFocusNode,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
@@ -582,7 +594,9 @@ class _ProductFormScreenState extends State<ProductFormScreen>
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF59E0B).withOpacity(0.1),
+                                    color: const Color(
+                                      0xFFF59E0B,
+                                    ).withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(
@@ -602,16 +616,19 @@ class _ProductFormScreenState extends State<ProductFormScreen>
                               ],
                             ),
                             const SizedBox(height: 24),
-                            
+
                             // Preview da imagem
-                            if (_useImageFromDevice && _selectedImageBase64 != null)
+                            if (_useImageFromDevice &&
+                                _selectedImageBase64 != null)
                               Center(
                                 child: Container(
                                   margin: const EdgeInsets.only(bottom: 16),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
                                     child: Image.memory(
-                                      base64Decode(_selectedImageBase64!.split(',')[1]),
+                                      base64Decode(
+                                        _selectedImageBase64!.split(',')[1],
+                                      ),
                                       height: 200,
                                       width: double.infinity,
                                       fit: BoxFit.cover,
@@ -619,7 +636,8 @@ class _ProductFormScreenState extends State<ProductFormScreen>
                                   ),
                                 ),
                               )
-                            else if (_imageUrlController.text.isNotEmpty && _isValidImageUrl(_imageUrlController.text))
+                            else if (_imageUrlController.text.isNotEmpty &&
+                                _isValidImageUrl(_imageUrlController.text))
                               Center(
                                 child: Container(
                                   margin: const EdgeInsets.only(bottom: 16),
@@ -634,20 +652,25 @@ class _ProductFormScreenState extends State<ProductFormScreen>
                                         height: 200,
                                         color: Colors.grey[200],
                                         child: const Center(
-                                          child: Icon(Icons.broken_image, size: 50),
+                                          child: Icon(
+                                            Icons.broken_image,
+                                            size: 50,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                            
+
                             // Botão para selecionar imagem do dispositivo
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF6366F1),
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -655,12 +678,13 @@ class _ProductFormScreenState extends State<ProductFormScreen>
                               onPressed: _showImageSourceDialog,
                               icon: const Icon(Icons.add_photo_alternate),
                               label: Text(
-                                _useImageFromDevice || _imageUrlController.text.isNotEmpty
+                                _useImageFromDevice ||
+                                        _imageUrlController.text.isNotEmpty
                                     ? 'Alterar Imagem'
                                     : 'Selecionar Imagem',
                               ),
                             ),
-                            
+
                             const SizedBox(height: 16),
                             const Row(
                               children: [
@@ -679,7 +703,7 @@ class _ProductFormScreenState extends State<ProductFormScreen>
                               ],
                             ),
                             const SizedBox(height: 16),
-                            
+
                             TextFormField(
                               controller: _imageUrlController,
                               enabled: !_useImageFromDevice,
@@ -696,7 +720,8 @@ class _ProductFormScreenState extends State<ProductFormScreen>
                                             _selectedImageBase64 = null;
                                           });
                                         },
-                                        tooltip: 'Usar URL ao invés de imagem local',
+                                        tooltip:
+                                            'Usar URL ao invés de imagem local',
                                       )
                                     : null,
                               ),
@@ -747,7 +772,9 @@ class _ProductFormScreenState extends State<ProductFormScreen>
                         ),
                         onPressed: _saveForm,
                         child: Text(
-                          _editedProduct.id.isEmpty ? 'CRIAR PRODUTO' : 'SALVAR ALTERAÇÕES',
+                          _editedProduct.id.isEmpty
+                              ? 'CRIAR PRODUTO'
+                              : 'SALVAR ALTERAÇÕES',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,

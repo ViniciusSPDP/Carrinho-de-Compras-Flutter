@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/product.dart';
 
 class ProductsService {
+  // Verifique se esta URL está correta para o seu MockAPI
   final String _baseUrl = 'https://6922888209df4a492322ab04.mockapi.io/products';
 
   Future<List<Product>> fetchProducts() async {
@@ -14,7 +15,7 @@ class ProductsService {
         List<Product> products = body.map((dynamic item) => Product.fromJson(item)).toList();
         return products;
       } else {
-        throw Exception('Falha ao carregar produtos');
+        throw Exception('Falha ao carregar produtos: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Erro de conexão: $e');
@@ -22,24 +23,41 @@ class ProductsService {
   }
 
   Future<void> addProduct(Product product) async {
-    await http.post(
+    final response = await http.post(
       Uri.parse(_baseUrl),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode(product.toJson()),
     );
+
+    // AQUI ESTÁ A CORREÇÃO: Verificar se deu certo
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      print("ERRO AO SALVAR: ${response.body}"); // Mostra no console o motivo
+      throw Exception('Erro ao salvar produto: ${response.statusCode} - ${response.body}');
+    }
   }
 
   Future<void> updateProduct(Product product) async {
     final url = '$_baseUrl/${product.id}'; 
-    await http.put(
+    final response = await http.put(
       Uri.parse(url),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode(product.toJson()),
     );
+
+    // VERIFICAÇÃO DE ERRO
+    if (response.statusCode != 200) {
+      print("ERRO AO ATUALIZAR: ${response.body}");
+      throw Exception('Erro ao atualizar: ${response.statusCode}');
+    }
   }
 
   Future<void> deleteProduct(String id) async {
     final url = '$_baseUrl/$id';
-    await http.delete(Uri.parse(url));
+    final response = await http.delete(Uri.parse(url));
+
+    // VERIFICAÇÃO DE ERRO
+    if (response.statusCode != 200) {
+      throw Exception('Erro ao excluir: ${response.statusCode}');
+    }
   }
 }
